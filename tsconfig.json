@@ -1,0 +1,16 @@
+{
+    "compilerOptions": {
+        "outDir": "./build",
+        "allowJs": false,
+        "target": "ES2017",
+        "module": "commonjs",
+        "esModuleInterop": true,
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "rootDirs": [
+            "./src",
+            "./config.json",
+            "./migrations"],
+        "strict": true
+    }
+}

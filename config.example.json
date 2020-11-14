@@ -1,0 +1,12 @@
+{
+    "database": {
+        "host": "localhost",
+        "port": 5432,
+        "user": "username",
+        "password": "password",
+        "database": "pvoutput"
+    },
+    "powerwallUrl": "https://powerwall",
+    "pvoApiKey": "abc123",
+    "pvoSystemId": "12345"
+}
