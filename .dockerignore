@@ -1,0 +1,6 @@
+.git*
+node_modules
+build
+config*.json
+images
+README.md

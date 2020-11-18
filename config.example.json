@@ -6,6 +6,7 @@
         "password": "password",
         "database": "pvoutput"
     },
+    "timezone": "Australia/Sydney",
     "powerwallUrl": "https://powerwall",
     "pvoApiKey": "abc123",
     "pvoSystemId": "12345"
