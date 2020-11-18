@@ -13,7 +13,12 @@ export async function getPowerwallData() {
 
         const values = [
             DateTime.utc().valueOf(),
-            currentLoad.body.solar.instant_power,           // solar_generation
+            // This is necessary because PVOutput will reject negative values for
+            // solar generation, understandably, and occasionally very small or negative values
+            // can be returned from the Powerwall.
+            currentLoad.body.solar.instant_power <= 30      // solar_generation
+                ? 0
+                : currentLoad.body.solar.instant_power,
             currentLoad.body.solar.instant_average_voltage, // solar_voltage
             currentLoad.body.load.instant_power,            // home_usage
             currentLoad.body.load.instant_average_voltage,  // home_voltage
