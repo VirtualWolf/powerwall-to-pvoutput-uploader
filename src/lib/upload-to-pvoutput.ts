@@ -23,7 +23,7 @@ export async function uploadToPvoutput() {
         const fiveMinutesAgo = DateTime.utc().minus({minutes: 5});
 
         if (startOfBatch !== null && DateTime.fromMillis(parseInt(startOfBatch)) <= fiveMinutesAgo ) {
-            logger(`startOfBatch ${startOfBatch} was less than or equal to ${fiveMinutesAgo.valueOf()}, sending data...`);
+            logger(`startOfBatch ${startOfBatch} was less than or equal to ${fiveMinutesAgo.valueOf()}, sending data...`, 'DEBUG');
 
             await sendAveragedDataToPvoutput(data.rows[0]);
 
@@ -60,40 +60,36 @@ async function sendAveragedDataToPvoutput(data: PowerwallData) {
         ? DateTime.fromMillis(parseInt(data.start_of_batch)).setZone(config.timezone)
         : DateTime.fromMillis(parseInt(data.start_of_batch));
 
-    try {
-        const payload = {
-            d: startOfBatch.toFormat('yyyyLLdd'),
-            t: startOfBatch.toFormat('HH:mm'),
-            v2: data.solar_generation,
-            v4: data.home_usage,
-            v6: data.solar_voltage,
-            v7: data.battery_flow,
-            v8: data.home_usage,
-            v9: data.battery_charge_percentage,
-            v10: data.grid_flow,
-            v11: data.solar_voltage,
-            v12: data.solar_generation,
-        }
+    const payload = {
+        d: startOfBatch.toFormat('yyyyLLdd'),
+        t: startOfBatch.toFormat('HH:mm'),
+        v2: data.solar_generation,
+        v4: data.home_usage,
+        v6: data.solar_voltage,
+        v7: data.battery_flow,
+        v8: data.home_usage,
+        v9: data.battery_charge_percentage,
+        v10: data.grid_flow,
+        v11: data.solar_voltage,
+        v12: data.solar_generation,
+    }
 
-        logger('Sending data to PVOutput:', 'DEBUG');
+    logger('Sending data to PVOutput:', 'DEBUG');
 
-        logger(payload, 'DEBUG');
+    logger(payload, 'DEBUG');
 
-        const result = await request.post('https://pvoutput.org/service/r2/addstatus.jsp')
-            .set({
-                'X-Pvoutput-SystemId': config.pvoSystemId,
-                'X-Pvoutput-Apikey': config.pvoApiKey,
-            })
-            .query(payload);
+    const result = await request.post('https://pvoutput.org/service/r2/addstatus.jsp')
+        .set({
+            'X-Pvoutput-SystemId': config.pvoSystemId,
+            'X-Pvoutput-Apikey': config.pvoApiKey,
+        })
+        .query(payload);
 
-        if (result.status === 200) {
-            logger(`Successfully sent data for batch at ${startOfBatch.toFormat('yyyyLLdd HH:mm')}`, 'DEBUG');
+    if (result.status === 200) {
+        logger(`Successfully sent data for batch at ${startOfBatch.toFormat('yyyyLLdd HH:mm')}`, 'DEBUG');
 
-            // Once the data has been successfully sent to PVOutput, we can delete it from the database so
-            // it's not just re-sending the same batch over and over again!
-            await database.query('DELETE FROM powerwall_data WHERE timestamp < ($1 + 300000)', [data.start_of_batch]);
-        }
-    } catch (err) {
-        logger(err, 'ERROR');
+        // Once the data has been successfully sent to PVOutput, we can delete it from the database so
+        // it's not just re-sending the same batch over and over again!
+        await database.query('DELETE FROM powerwall_data WHERE timestamp < ($1::bigint + 300000)', [data.start_of_batch]);
     }
 }
