@@ -4,6 +4,8 @@ import logger from './logger';
 
 logger('App started!');
 
+// Save the data from the Powerwall every five seconds
 setInterval(async () => await getPowerwallData(), 5000);
 
+// Send the data to PVOutput every five minutes
 setInterval(async () => await uploadToPvoutput(), 300000);

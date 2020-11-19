@@ -18,11 +18,19 @@ interface PowerwallData {
 export async function uploadToPvoutput() {
     try {
         const data = await getAveragedDataFromDatabase();
+        const startOfBatch = data.rows[0].start_of_batch;
 
-        if (data.rows[0].start_of_batch !== null) {
+        const fiveMinutesAgo = DateTime.utc().minus({minutes: 5});
+
+        if (startOfBatch !== null && DateTime.fromMillis(parseInt(startOfBatch)) <= fiveMinutesAgo ) {
+            logger(`startOfBatch ${startOfBatch} was less than or equal to ${fiveMinutesAgo.valueOf()}, sending data...`);
+
             await sendAveragedDataToPvoutput(data.rows[0]);
 
-            await uploadToPvoutput();
+            // Wait one minute before sending another batch so as not to get rate-limited
+            // in the case of a local internet outage where there's lots of batches left
+            // to send
+            setTimeout(async () => await uploadToPvoutput(), 60000);
         }
     } catch (err) {
         logger(err, 'ERROR');
@@ -32,7 +40,7 @@ export async function uploadToPvoutput() {
 async function getAveragedDataFromDatabase() {
     return await database.query(`
         SELECT
-            (SELECT MAX(timestamp) FROM powerwall_data) - 300000 AS start_of_batch, -- 5 minutes in milliseconds
+            (SELECT MIN(timestamp) FROM powerwall_data) AS start_of_batch,
             AVG(solar_generation) AS solar_generation,
             AVG(solar_voltage) AS solar_voltage,
             AVG(home_usage) AS home_usage,
@@ -41,8 +49,8 @@ async function getAveragedDataFromDatabase() {
             AVG(battery_flow) AS battery_flow,
             AVG(battery_charge_percentage) AS battery_charge_percentage
         FROM powerwall_data
-        WHERE timestamp > (
-            (SELECT MAX(timestamp) FROM powerwall_data) - 300000 -- 5 minutes in milliseconds
+        WHERE timestamp < (
+            (SELECT MIN(timestamp) FROM powerwall_data) + 300000 -- 5 minutes in milliseconds
         )`
     );
 }
@@ -81,7 +89,9 @@ async function sendAveragedDataToPvoutput(data: PowerwallData) {
         if (result.status === 200) {
             logger(`Successfully sent data for batch at ${startOfBatch.toFormat('yyyyLLdd HH:mm')}`, 'DEBUG');
 
-            await database.query('DELETE FROM powerwall_data WHERE timestamp > $1', [data.start_of_batch]);
+            // Once the data has been successfully sent to PVOutput, we can delete it from the database so
+            // it's not just re-sending the same batch over and over again!
+            await database.query('DELETE FROM powerwall_data WHERE timestamp < ($1 + 300000)', [data.start_of_batch]);
         }
     } catch (err) {
         logger(err, 'ERROR');
