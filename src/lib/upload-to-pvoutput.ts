@@ -15,6 +15,20 @@ interface PowerwallData {
     battery_charge_percentage: number;
 }
 
+interface PVOutputPayload {
+    d: string;
+    t: string;
+    v2: number;
+    v4: number;
+    v6: number;
+    v7?: number;
+    v8?: number;
+    v9?: number;
+    v10?: number;
+    v11?: number;
+    v12?: number;
+}
+
 export async function uploadToPvoutput() {
     try {
         const data = await getAveragedDataFromDatabase();
@@ -60,18 +74,24 @@ async function sendAveragedDataToPvoutput(data: PowerwallData) {
         ? DateTime.fromMillis(parseInt(data.start_of_batch)).setZone(config.timezone)
         : DateTime.fromMillis(parseInt(data.start_of_batch));
 
-    const payload = {
+    let payload: PVOutputPayload = {
         d: startOfBatch.toFormat('yyyyLLdd'),
         t: startOfBatch.toFormat('HH:mm'),
         v2: data.solar_generation,
         v4: data.home_usage,
         v6: data.solar_voltage,
-        v7: data.battery_flow,
-        v8: data.home_usage,
-        v9: data.battery_charge_percentage,
-        v10: data.grid_flow,
-        v11: data.solar_voltage,
-        v12: data.solar_generation,
+    }
+
+    if (config.sendExtendedData === true) {
+        payload = {
+            ...payload,
+            v7: data.battery_flow,
+            v8: data.home_usage,
+            v9: data.battery_charge_percentage,
+            v10: data.grid_flow,
+            v11: data.solar_voltage,
+            v12: data.solar_generation,
+        }
     }
 
     logger('Sending data to PVOutput:', 'DEBUG');

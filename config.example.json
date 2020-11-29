@@ -9,5 +9,6 @@
     "timezone": "Australia/Sydney",
     "powerwallUrl": "https://powerwall",
     "pvoApiKey": "abc123",
-    "pvoSystemId": "12345"
+    "pvoSystemId": "12345",
+    "sendExtendedData": true
 }
