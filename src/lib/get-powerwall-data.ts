@@ -1,14 +1,21 @@
 import request from 'superagent';
 import { DateTime } from 'luxon';
+import { getToken } from './get-token';
 import database from '../database';
 import logger from '../logger';
 const config = require('../../config.json');
 
 export async function getPowerwallData() {
     try {
+        let token = await getToken();
+
         const [currentLoad, batteryCharge] = await Promise.all([
-            await request.get(`${config.powerwallUrl}/api/meters/aggregates`).disableTLSCerts(),
-            await request.get(`${config.powerwallUrl}/api/system_status/soe`).disableTLSCerts()
+            await request.get(`${config.powerwallUrl}/api/meters/aggregates`)
+                .set('Cookie', `AuthCookie=${token}`)
+                .disableTLSCerts(),
+            await request.get(`${config.powerwallUrl}/api/system_status/soe`)
+                .set('Cookie', `AuthCookie=${token}`)
+                .disableTLSCerts()
         ]);
 
         const values = [
@@ -35,6 +42,10 @@ export async function getPowerwallData() {
 
         logger(`Logged values: ${values}`, 'DEBUG');
     } catch (err) {
-        logger(err, 'ERROR');
+        if (err.status === 401 || err.status === 403) {
+            await getToken(true);
+        }
+
+        logger(err.message, 'ERROR');
     }
 }

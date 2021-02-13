@@ -15,12 +15,15 @@ The application requires a file called `config.json` in the root level of the re
     },
     "timezone": "Australia/Sydney",
     "powerwallUrl": "https://powerwall",
+    "powerwallEmail": "user@example.com",
+    "powerwallPassword": "local-powerwall-api-password",
     "pvoApiKey": "abc123",
     "pvoSystemId": "12345",
     "sendExtendedData": true
 }
 ```
 
+* The `powerwallEmail` and `powerwallPassword` fields are required since Powerwall 2 firmware version 20.49.0. If you don't have them set already, [follow the instructions on Tesla's site](https://www.tesla.com/support/energy/powerwall/own/monitoring-from-home-network) to configure them.
 * The `timezone` option can be omitted if the script is running natively on your machine rather than inside a Docker container (inside a Docker container, the timezone is always UTC which will throw off the times it's sending to PVOutput).
 * The `pvoApiKey` can be generated in [account settings](https://pvoutput.org/account.jsp) at PVOutput, and the `pvoSystemId` is listed under Registered Systems on the same page.
 * If `sendExtendedData` is set to `false`, only solar generation, home consumption, and solar voltage will be sent.

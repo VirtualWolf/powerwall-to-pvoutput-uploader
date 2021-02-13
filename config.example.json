@@ -8,6 +8,8 @@
     },
     "timezone": "Australia/Sydney",
     "powerwallUrl": "https://powerwall",
+    "powerwallEmail": "user@example.com",
+    "powerwallPassword": "local-powerwall-api-password",
     "pvoApiKey": "abc123",
     "pvoSystemId": "12345",
     "sendExtendedData": true
