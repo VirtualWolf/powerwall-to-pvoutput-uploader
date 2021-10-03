@@ -14,7 +14,8 @@ if (config.mqtt) {
             host: config.mqtt.host,
             port: config.mqtt.port || 1883,
         }],
-        clientId: 'powerwall-to-pvoutput-uploader'
+        clientId: 'powerwall-to-pvoutput-uploader',
+        clean: false,
     });
 }
 
