@@ -52,15 +52,17 @@ You can optionally add the following to your `config.json` to enable sending of 
 }
 ```
 
-The `port` field is optional and defaults to 1883 if not specified. It will publish data to the specified topic in the following format:
+The `port` field is optional and defaults to 1883 if not specified. It will publish data to the specified topic in a similar fashion to what's sent to PVOutput:
 
 ```json
 {
-    "consumption": "0.00",
-    "production": "0.00",
-    "batteryChargePercentage": "100",
-    "batteryChargeState": "idle|draining|charging"
+    "timestamp": number,
+    "solar_generation": number,
+    "solar_voltage": number,
+    "home_usage": number,
+    "home_voltage": number,
+    "grid_flow": number,
+    "battery_flow": number,
+    "battery_charge_percentage": number
 }
 ```
-
-The consumption and production values are in kilowatts. This is primarily for use with my [pi-home-dashboard](https://github.com/VirtualWolf/pi-home-dashboard).

@@ -1,4 +1,4 @@
-import request, { SuperAgent } from 'superagent';
+import request from 'superagent';
 import { DateTime } from 'luxon';
 import { getToken } from './get-token';
 import database from '../database';
@@ -55,20 +55,27 @@ export async function getPowerwallData() {
         );
 
         if (config.mqtt) {
-            const message: PowerwallMqttPayload = {
-                consumption: (currentLoad.body.load.instant_power/1000).toFixed(2),
-                production: currentLoad.body.solar.instant_power <= 30
-                    ? '0.00'
-                    : (currentLoad.body.solar.instant_power/1000).toFixed(2),
-                batteryChargePercentage: batteryCharge.body.percentage.toFixed(1),
-                batteryChargeState: currentLoad.body.battery.instant_power >= -30 && currentLoad.body.battery.instant_power <= 30
-                    ? 'idle'
-                    : currentLoad.body.battery.instant_power > 30
-                        ? 'draining'
-                        : 'charging',
-            }
+            const [
+                timestamp,
+                solar_generation,
+                solar_voltage,
+                home_usage,
+                home_voltage,
+                grid_flow,
+                battery_flow,
+                battery_charge_percentage,
+            ] = values;
 
-            publishMessage(message);
+            publishMessage({
+                timestamp,
+                solar_generation,
+                solar_voltage,
+                home_usage,
+                home_voltage,
+                grid_flow,
+                battery_flow,
+                battery_charge_percentage,
+            });
         }
 
         logger(`Logged values: ${values}`, 'DEBUG');
@@ -76,25 +83,20 @@ export async function getPowerwallData() {
         if (err.status === 401 || err.status === 403) {
             await getToken(true);
         } else {
-            if (config.mqtt) {
-                publishMessage({
-                    consumption: '—',
-                    production: '—',
-                    batteryChargePercentage: '—',
-                    batteryChargeState: 'idle',
-                });
-            }
+            logger(err.message, 'DEBUG');
         }
-
-        logger(err.message, 'DEBUG');
     }
 }
 
 interface PowerwallMqttPayload {
-    consumption: string;
-    production: string;
-    batteryChargePercentage: string;
-    batteryChargeState: 'idle' | 'charging' | 'draining';
+    timestamp: number;
+    solar_generation: number;
+    solar_voltage: number;
+    home_usage: number;
+    home_voltage: number;
+    grid_flow: number;
+    battery_flow: number;
+    battery_charge_percentage: number;
 }
 
 function publishMessage(payload: PowerwallMqttPayload) {
@@ -105,7 +107,7 @@ function publishMessage(payload: PowerwallMqttPayload) {
         retain: true,
     }, (err) => {
         if (err) {
-            logger('Failed to send message to broker: ' + message, 'ERROR');
+            logger('Failed to send message to broker: ' + message);
         } else {
             logger('Message sent to broker: ' + message, 'DEBUG');
         }
