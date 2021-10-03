@@ -4,7 +4,7 @@ This is a TypeScript/PostgreSQL version of [Powerwall2PVOutput](https://github.c
 ## Configuration
 The application requires a file called `config.json` in the root level of the repository with the following contents:
 
-```
+```json
 {
     "database": {
         "host": "localhost",
@@ -33,5 +33,34 @@ To send [extended data](https://pvoutput.org/help.html#extendeddata) to PVOutput
 ![Extended data](images/extended-data.png)
 
 ## Running
-* To run it in a Docker container, build the image with `docker build -t virtualwolf/powerwall-to-pvoutput-uploader:latest .` and start it with `docker-compose up -d`.
+* To run it in a Docker container, start it with `docker-compose up -d`. If the image doesn't exist, it will be built. If you need to build it again after pulling new changes from this repository, run `docker-compose build` before `docker-compose up -d`.
 * To run it locally on your machine, compile it with `npm run build`, prepare the database with `npm run db:migrate` and start it with `npm start`, then use something like [PM2](https://pm2.keymetrics.io) or [Forever](https://www.npmjs.com/package/forever) to keep it up.
+
+To enable debug logging to see what's going on under the covers, set the `DEBUG` environment variable to `true`.
+
+## Publishing to MQTT
+You can optionally add the following to your `config.json` to enable sending of the Powerwall data to a local MQTT broker:
+
+```json
+{
+    [...]
+    "mqtt": {
+        "host": "localhost",
+        "port": 1883,
+        "topic": "home/power"
+    }
+}
+```
+
+The `port` field is optional and defaults to 1883 if not specified. It will publish data to the specified topic in the following format:
+
+```json
+{
+    "consumption": "0.00",
+    "production": "0.00",
+    "batteryChargePercentage": "100",
+    "batteryChargeState": "idle|draining|charging"
+}
+```
+
+The consumption and production values are in kilowatts. This is primarily for use with my [pi-home-dashboard](https://github.com/VirtualWolf/pi-home-dashboard).
