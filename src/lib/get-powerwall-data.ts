@@ -41,7 +41,14 @@ export async function getPowerwallData() {
                 ? 0
                 : currentLoad.body.solar.instant_power,
             currentLoad.body.solar.instant_average_voltage, // solar_voltage
-            currentLoad.body.load.instant_power,            // home_usage
+
+            // Similar to the solar power above, it seems VERY occasionally that the Powerwall
+            // returns negative values for home usage, which makes zero sense, but if it happens
+            // enough that the average usage over five minutes is negative, it'll end up totally
+            // blocking up the sending of ANY data to PVOutput
+            currentLoad.body.load.instant_power < 0         // home_usage
+                ? 0
+                : currentLoad.body.load.instant_power,
             currentLoad.body.load.instant_average_voltage,  // home_voltage
             currentLoad.body.site.instant_power,            // grid_flow
             currentLoad.body.battery.instant_power,         // battery_flow
