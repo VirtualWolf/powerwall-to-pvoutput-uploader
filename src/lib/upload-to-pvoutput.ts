@@ -46,8 +46,8 @@ export async function uploadToPvoutput() {
             // to send
             setTimeout(async () => await uploadToPvoutput(), 60000);
         }
-    } catch (err) {
-        logger(err, 'ERROR');
+    } catch (err: any) {
+        logger(`Can't ${err.response.error.method} to ${err.response.error.path}: ${err.response.text}`, 'ERROR');
     }
 }
 
