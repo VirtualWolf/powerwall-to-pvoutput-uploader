@@ -32,47 +32,49 @@ export async function getPowerwallData() {
                 .disableTLSCerts()
         ]);
 
-        const values = [
-            DateTime.utc().valueOf(),
-            // This is necessary because PVOutput will reject negative values for
-            // solar generation, understandably, and occasionally very small or negative values
-            // can be returned from the Powerwall.
-            currentLoad.body.solar.instant_power <= 30      // solar_generation
-                ? 0
-                : currentLoad.body.solar.instant_power,
-            currentLoad.body.solar.instant_average_voltage, // solar_voltage
+        const timestamp = DateTime.utc().valueOf();
 
-            // Similar to the solar power above, it seems VERY occasionally that the Powerwall
-            // returns negative values for home usage, which makes zero sense, but if it happens
-            // enough that the average usage over five minutes is negative, it'll end up totally
-            // blocking up the sending of ANY data to PVOutput
-            currentLoad.body.load.instant_power < 0         // home_usage
-                ? 0
-                : currentLoad.body.load.instant_power,
-            currentLoad.body.load.instant_average_voltage,  // home_voltage
-            currentLoad.body.site.instant_power,            // grid_flow
-            currentLoad.body.battery.instant_power,         // battery_flow
-            batteryCharge.body.percentage,                  // battery_charge_percentage
-        ];
+        // This is necessary because PVOutput will reject negative values for
+        // solar generation, understandably, and occasionally very small or negative values
+        // can be returned from the Powerwall.
+        const solar_generation = currentLoad.body.solar.instant_power <= 30
+            ? 0
+            : currentLoad.body.solar.instant_power;
+
+        const solar_voltage = currentLoad.body.solar.instant_average_voltage;
+
+        // Similar to the solar power above, it seems VERY occasionally that the Powerwall
+        // returns negative values for home usage, which makes zero sense, but if it happens
+        // enough that the average usage over five minutes is negative, it'll end up totally
+        // blocking up the sending of ANY data to PVOutput
+        const home_usage = currentLoad.body.load.instant_power < 0
+            ? 0
+            : currentLoad.body.load.instant_power;
+
+        const home_voltage = currentLoad.body.load.instant_average_voltage;
+
+        const grid_flow = currentLoad.body.site.instant_power;
+
+        const battery_flow = currentLoad.body.battery.instant_power;
+
+        const battery_charge_percentage = batteryCharge.body.percentage;
+
+        // When the Powerwall is running a firmware update, the API can still be hit but all
+        // the values returned are zero, even the consumption and battery charge. If that
+        // happens, best is to just skip the whole reading for the period.
+        if (currentLoad.body.load.instant_power <= 0 && batteryCharge.body.percentage === 0) {
+            logger('Consumption and battery charge are both zero, skipping reading');
+
+            return;
+        }
 
         await database.query(`INSERT INTO powerwall_data
             (timestamp, solar_generation, solar_voltage, home_usage, home_voltage, grid_flow, battery_flow, battery_charge_percentage)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-            values,
+            [timestamp, solar_generation, solar_voltage, home_usage, home_voltage, grid_flow, battery_flow, battery_charge_percentage],
         );
 
         if (config.mqtt) {
-            const [
-                timestamp,
-                solar_generation,
-                solar_voltage,
-                home_usage,
-                home_voltage,
-                grid_flow,
-                battery_flow,
-                battery_charge_percentage,
-            ] = values;
-
             publishMessage({
                 timestamp,
                 solar_generation,
@@ -85,7 +87,7 @@ export async function getPowerwallData() {
             });
         }
 
-        logger(`Logged values: ${values}`, 'DEBUG');
+        logger(`Logged values: ${JSON.stringify({timestamp, solar_generation, solar_voltage, home_usage, home_voltage, grid_flow, battery_flow, battery_charge_percentage})}`, 'DEBUG');
     } catch (err: any) {
         if (err.status === 401 || err.status === 403) {
             await getToken(true);

@@ -30,6 +30,12 @@ interface PVOutputPayload {
 }
 
 export async function uploadToPvoutput() {
+    if (process.env.DISABLE_PVOUTPUT_UPLOAD) {
+        logger('DISABLE_PVOUTPUT_UPLOAD is set, skipping upload to PVOutput');
+
+        return;
+    }
+
     try {
         const data = await getAveragedDataFromDatabase();
         const startOfBatch = data.rows[0].start_of_batch;

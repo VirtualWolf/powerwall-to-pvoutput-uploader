@@ -32,11 +32,13 @@ To send [extended data](https://pvoutput.org/help.html#extendeddata) to PVOutput
 
 ![Extended data](images/extended-data.png)
 
+## Environment variables
+* `DEBUG` — Set this to enable full debug logging of everything that's going on
+* `DISABLE_PVOUTPUT_UPLOAD` — Set this to have the application do everything except actually send data to PVOutput (useful for local development)
+
 ## Running
 * To run it in a Docker container, start it with `docker-compose up -d`. If the image doesn't exist, it will be built. If you need to build it again after pulling new changes from this repository, run `docker-compose build` before `docker-compose up -d`.
 * To run it locally on your machine, compile it with `npm run build`, prepare the database with `npm run db:migrate` and start it with `npm start`, then use something like [PM2](https://pm2.keymetrics.io) or [Forever](https://www.npmjs.com/package/forever) to keep it up.
-
-To enable debug logging to see what's going on under the covers, set the `DEBUG` environment variable to `true`.
 
 ## Publishing to MQTT
 You can optionally add the following to your `config.json` to enable sending of the Powerwall data to a local MQTT broker:
