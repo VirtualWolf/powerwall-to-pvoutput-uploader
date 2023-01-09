@@ -14,7 +14,7 @@
   "repository": "https://github.com/VirtualWolf/powerwall-to-pvoutput-uploader.git",
   "dependencies": {
     "knex": "^0.95.11",
-    "luxon": "^2.0.2",
+    "luxon": "^2.5.2",
     "mqtt": "^4.2.8",
     "pg": "^8.7.1",
     "superagent": "^6.1.0"
