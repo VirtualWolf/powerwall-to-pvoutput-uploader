@@ -2,13 +2,16 @@ version: '3.3'
 
 services:
   app:
-    image: virtualwolf/powerwall-to-pvoutput-uploader:latest
-    build: .
+    image: node:18.16-bookworm
     restart: unless-stopped
+    working_dir: /home/node/app
     env_file:
       - .env
     depends_on:
       - postgres
+    volumes:
+      - ./:/home/node/app
+    entrypoint: npm run start:dev
 
   postgres:
     image: postgres:15.3-alpine3.18
@@ -16,7 +19,7 @@ services:
     env_file:
       - .env
     volumes:
-      - data:/var/lib/postgresql/data
+      - dev_data:/var/lib/postgresql/data
 
 volumes:
-  data:
+  dev_data:

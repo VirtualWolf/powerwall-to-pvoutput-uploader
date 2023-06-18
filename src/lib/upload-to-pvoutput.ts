@@ -2,7 +2,6 @@ import request from 'superagent';
 import { DateTime } from 'luxon';
 import database from '../database';
 import logger from '../logger';
-const config = require('../../config.json');
 
 interface PowerwallData {
     start_of_batch: string;
@@ -30,12 +29,6 @@ interface PVOutputPayload {
 }
 
 export async function uploadToPvoutput() {
-    if (process.env.DISABLE_PVOUTPUT_UPLOAD) {
-        logger('DISABLE_PVOUTPUT_UPLOAD is set, skipping upload to PVOutput');
-
-        return;
-    }
-
     try {
         const data = await getAveragedDataFromDatabase();
         const startOfBatch = data.rows[0].start_of_batch;
@@ -76,8 +69,8 @@ async function getAveragedDataFromDatabase() {
 }
 
 async function sendAveragedDataToPvoutput(data: PowerwallData) {
-    const startOfBatch = config.timezone
-        ? DateTime.fromMillis(parseInt(data.start_of_batch)).setZone(config.timezone)
+    const startOfBatch = process.env.TIMEZONE
+        ? DateTime.fromMillis(parseInt(data.start_of_batch)).setZone(process.env.TIMEZONE)
         : DateTime.fromMillis(parseInt(data.start_of_batch));
 
     let payload: PVOutputPayload = {
@@ -88,7 +81,7 @@ async function sendAveragedDataToPvoutput(data: PowerwallData) {
         v6: data.solar_voltage,
     }
 
-    if (config.sendExtendedData === true) {
+    if (process.env.PVOUTPUT_SEND_EXTENDED_DATA === 'true') {
         payload = {
             ...payload,
             v7: data.battery_flow,
@@ -100,14 +93,22 @@ async function sendAveragedDataToPvoutput(data: PowerwallData) {
         }
     }
 
+    if (process.env.DISABLE_PVOUTPUT_UPLOAD === 'true') {
+        logger('DISABLE_PVOUTPUT_UPLOAD is set, skipping upload', 'DEBUG');
+
+        await deleteBatchFromDatabase({startOfBatch});
+
+        return;
+    }
+
     logger('Sending data to PVOutput:', 'DEBUG');
 
     logger(payload, 'DEBUG');
 
     const result = await request.post('https://pvoutput.org/service/r2/addstatus.jsp')
         .set({
-            'X-Pvoutput-SystemId': config.pvoSystemId,
-            'X-Pvoutput-Apikey': config.pvoApiKey,
+            'X-Pvoutput-SystemId': process.env.PVOUTPUT_SYSTEM_ID,
+            'X-Pvoutput-Apikey': process.env.PVOUTPUT_API_KEY,
         })
         .query(payload);
 
@@ -116,6 +117,12 @@ async function sendAveragedDataToPvoutput(data: PowerwallData) {
 
         // Once the data has been successfully sent to PVOutput, we can delete it from the database so
         // it's not just re-sending the same batch over and over again!
-        await database.query('DELETE FROM powerwall_data WHERE timestamp < ($1::bigint + 300000)', [data.start_of_batch]);
+        await deleteBatchFromDatabase({startOfBatch});
     }
+}
+
+async function deleteBatchFromDatabase({startOfBatch}: {startOfBatch: DateTime}) {
+    logger(`Removing data from database beginning at ${startOfBatch.toMillis()} (${startOfBatch.toISO()})`);
+
+    await database.query('DELETE FROM powerwall_data WHERE timestamp < ($1::bigint + 300000)', [startOfBatch.toMillis()]);
 }

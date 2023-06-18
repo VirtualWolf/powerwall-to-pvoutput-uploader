@@ -1,5 +1,4 @@
 import { DateTime } from 'luxon';
-const config = require('../config.json');
 
 enum Levels {
     ERROR, INFO, DEBUG
@@ -8,8 +7,8 @@ enum Levels {
 export default function log(message: any, level: keyof typeof Levels = 'INFO') {
     const timestampFormat = 'yyyy-LL-dd HH:mm:ss';
 
-    const timestamp = config.timezone
-        ? DateTime.utc().setZone(config.timezone).toFormat(timestampFormat)
+    const timestamp = process.env.TIMEZONE
+        ? DateTime.utc().setZone(process.env.TIMEZONE).toFormat(timestampFormat)
         : DateTime.local().toFormat(timestampFormat);
 
     if (process.env.DEBUG) {

@@ -4,15 +4,16 @@ import { getToken } from './get-token';
 import database from '../database';
 import { connect, MqttClient } from 'mqtt';
 import logger from '../logger';
-const config = require('../../config.json');
 
 let client: MqttClient;
 
-if (config.mqtt) {
+if (process.env.MQTT_HOST && process.env.MQTT_TOPIC) {
     client = connect({
         servers: [{
-            host: config.mqtt.host,
-            port: config.mqtt.port || 1883,
+            host: process.env.MQTT_HOST,
+            port: process.env.MQTT_PORT
+                ? parseInt(process.env.MQTT_HOST)
+                : 1883,
         }],
         clientId: 'powerwall-to-pvoutput-uploader',
         clean: false,
@@ -24,10 +25,10 @@ export async function getPowerwallData() {
         let token = await getToken();
 
         const [currentLoad, batteryCharge] = await Promise.all([
-            await request.get(`${config.powerwallUrl}/api/meters/aggregates`)
+            await request.get(`${process.env.POWERWALL_URL}/api/meters/aggregates`)
                 .set('Cookie', `AuthCookie=${token}`)
                 .disableTLSCerts(),
-            await request.get(`${config.powerwallUrl}/api/system_status/soe`)
+            await request.get(`${process.env.POWERWALL_URL}/api/system_status/soe`)
                 .set('Cookie', `AuthCookie=${token}`)
                 .disableTLSCerts()
         ]);
@@ -60,7 +61,7 @@ export async function getPowerwallData() {
         const battery_charge_percentage = batteryCharge.body.percentage;
 
         // When the Powerwall is running a firmware update, the API can still be hit but all
-        // the values returned are zero, even the consumption and battery charge. If that
+        // the values returned are zero, even for the consumption and battery charge. If that
         // happens, best is to just skip the whole reading for the period.
         if (currentLoad.body.load.instant_power <= 0 && batteryCharge.body.percentage === 0) {
             logger('Consumption and battery charge are both zero, skipping reading');
@@ -74,7 +75,7 @@ export async function getPowerwallData() {
             [timestamp, solar_generation, solar_voltage, home_usage, home_voltage, grid_flow, battery_flow, battery_charge_percentage],
         );
 
-        if (config.mqtt) {
+        if (process.env.MQTT_HOST && process.env.MQTT_TOPIC) {
             publishMessage({
                 timestamp,
                 solar_generation,
@@ -111,7 +112,7 @@ interface PowerwallMqttPayload {
 function publishMessage(payload: PowerwallMqttPayload) {
     const message = JSON.stringify(payload);
 
-    client.publish(config.mqtt.topic, message, {
+    client.publish(process.env.MQTT_TOPIC!, message, {
         qos: 1,
         retain: true,
     }, (err) => {

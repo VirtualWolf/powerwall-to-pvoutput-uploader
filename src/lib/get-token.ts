@@ -1,5 +1,4 @@
 import request from 'superagent';
-const config = require('../../config.json');
 
 let token: string | undefined;
 
@@ -8,11 +7,11 @@ export async function getToken(refresh = false) {
         return token;
     }
 
-    const response = await request.post(`${config.powerwallUrl}/api/login/Basic`)
+    const response = await request.post(`${process.env.POWERWALL_URL}/api/login/Basic`)
         .send({
             'username': 'customer',
-            'password': config.powerwallPassword,
-            "email": config.powerwallEmail,
+            'password': process.env.POWERWALL_PASSWORD,
+            "email": process.env.POWERWALL_EMAIL,
             "force_sm_off":true,
         })
         .disableTLSCerts()

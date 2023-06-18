@@ -1,6 +1,8 @@
 .git*
+bin
 node_modules
-build
+dist
 config*.json
 images
 README.md
+.env*
