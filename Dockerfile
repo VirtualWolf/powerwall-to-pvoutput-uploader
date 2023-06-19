@@ -1,4 +1,4 @@
-FROM node:18.16.0-bookworm-slim AS base
+FROM node:18.16.0-alpine3.18 AS base
 
 FROM base AS build
 RUN mkdir -p /opt/build
