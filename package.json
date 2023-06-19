@@ -5,7 +5,7 @@
   "main": "dist/app.js",
   "scripts": {
     "prestart": "npm run db:migrate",
-    "start": "node -r dotenv/config build/app.js",
+    "start": "node -r dotenv/config dist/app.js",
     "prestart:dev": "npm run db:migrate",
     "start:dev": "nodemon --exec ts-node -r dotenv/config src/app.ts",
     "db:migrate": "knex migrate:latest",

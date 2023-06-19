@@ -17,4 +17,4 @@ RUN npm ci --omit dev && rm -rf /home/node/.npm
 COPY --chown=node:node migrations migrations
 COPY --chown=node:node --from=build /opt/build/dist /opt/service/dist
 
-CMD ["node", "-r", "dotenv/config", "dist/app.js"]
+CMD ["npm", "start"]
