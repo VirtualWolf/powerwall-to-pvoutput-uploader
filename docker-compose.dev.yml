@@ -2,7 +2,7 @@ version: '3.3'
 
 services:
   app:
-    image: node:18.16-alpine3.18
+    image: node:20.12-alpine3.19
     restart: unless-stopped
     working_dir: /home/node/app
     env_file:
@@ -14,7 +14,7 @@ services:
     entrypoint: npm run start:dev
 
   postgres:
-    image: postgres:15.3-alpine3.18
+    image: postgres:15.6-alpine3.19
     restart: unless-stopped
     env_file:
       - .env
