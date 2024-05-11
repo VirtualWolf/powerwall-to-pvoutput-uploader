@@ -9,7 +9,7 @@ Copy the example configuration file `.env.example` in the root level of the repo
     * If you're running directly on your machine without Docker, you'll need to configure the other `POSTGRES_` variables that are commented out.
 * `POWERWALL_URL` — The local URL of your Powerwall.
     * ⚠️ **Important note:** This _must_ be an `https://` URL and not an `http://` one.
-    * Additionally, according to [this document](https://github.com/vloschiavo/powerwall2?tab=readme-ov-file#a-note-about-https-and-ssl-certificates) the Powerwall will only respond if you're accessing it via either direct IP address, or via `https://powerwall`, `https://powerpack`, or `https://teg` without any domain component.
+    * Additionally, according to [this document](https://github.com/vloschiavo/powerwall2?tab=readme-ov-file#a-note-about-https-and-ssl-certificates) the Powerwall will only respond if you're accessing it via either direct IP address, or via `https://powerwall`, `https://powerpack`, or `https://teg`, without any domain component.
 * `POWERWALL_EMAIL` and `POWERWALL_PASSWORD` — Accessing the Powerwall 2's API locally since firmware version 20.49.0 requires a username and password. If you haven't set up a username and password on the Powerwall 2 yet, [follow the instructions on Tesla's site](https://www.tesla.com/support/energy/powerwall/own/monitoring-from-home-network) to configure them.
 * `TIMEZONE` — If you're using the standard Docker setup, be sure to set this variable as inside a Docker container, the timezone is always UTC which will throw off the times being sent to PVOutput. (This isn't _strictly_ required, but highly recommended.)
 * `PVOUTPUT_API_KEY` and `PVOUTPUT_SYSTEM_ID` — The API key can be generated in [account settings](https://pvoutput.org/account.jsp) at PVOutput, and the system ID is listed under Registered Systems on the same page.
@@ -37,7 +37,7 @@ To send [extended data](https://pvoutput.org/help.html#extendeddata) to PVOutput
 
 ## Optional settings
 * `DEBUG` — Set this to enable full debug logging of everything that's going on
-* `DISABLE_PVOUTPUT_UPLOAD` — Set this to have the application do everything except actually send data to PVOutput (useful for local development)
+* `DISABLE_PVOUTPUT_UPLOAD` — Set this to have the application do everything except actually send data to PVOutput (useful for local development, or if you don't care about PVOutput at all and just want to have the data from the Powerwall accessible via MQTT as described below)
 
 ## Publishing to MQTT
 * `MQTT_HOST`, `MQTT_PORT`, and `MQTT_TOPIC` — Set these variables to have powerwall-to-pvoutput publish the data it receives from the Powerwall to the specified MQTT broker and topic.
