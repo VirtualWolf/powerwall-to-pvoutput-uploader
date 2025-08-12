@@ -1,8 +1,0 @@
-.git*
-bin
-node_modules
-dist
-config*.json
-images
-README.md
-.env*
